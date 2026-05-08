@@ -28,11 +28,14 @@ log:
 # The following configuration is used for demonstration purposes. It reflects to the config structure used by the
 # Postgres adapter used in here (as an example).
 db:
-  # Postgres
   host: localhost
   port: 5432
   database: test
-  user: postgres
-  password: admin
   poolsize: 10
-  check: false # set to true to check whether db is accessible at startup
+  check: false   # set to true to verify DB connectivity at startup
+  runtime:
+    user: app_user       # restricted role — SELECT/INSERT/UPDATE/DELETE only
+    password: app_pwd
+  migrations:
+    user: migration_user # DDL-capable role — runs schema changes at startup
+    password: migration_pwd

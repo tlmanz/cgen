@@ -35,7 +35,7 @@ func NewResolvedContainer(cfg Config) (*Container, error) {
 	}
 	c.Logger = logger
 
-	pg, err := postgres.NewDatabaseAdapterPostgres(cfg.Database)
+	pg, err := postgres.NewDatabaseAdapterPostgres(cfg.Database.RuntimeConfig())
 	if err != nil {
 		return nil, errors.Join(errors.New("container: error creating postgres adapter"), err)
 	}

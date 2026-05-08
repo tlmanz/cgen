@@ -15,8 +15,8 @@ func runMigrations(ctx context.Context, cfg infra.Config, ctr *infra.Container) 
 		Host:     cfg.Database.Host,
 		Port:     cfg.Database.Port,
 		Database: cfg.Database.Database,
-		User:     cfg.Database.User,
-		Password: cfg.Database.Password,
+		User:     cfg.Database.Migrations.User,
+		Password: cfg.Database.Migrations.Password,
 	}, migrations.FS, "sql", pgmigrator.LogFunc{
 		InfoFn:  func(msg string) { ctr.Logger.Info(ctx, msg) },
 		ErrorFn: func(msg string) { ctr.Logger.Error(ctx, msg) },

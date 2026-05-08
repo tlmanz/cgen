@@ -14,7 +14,38 @@ type Config struct {
 	WS       WSConfig          `mapstructure:"ws"`
 	Metrics  MetricsConfig     `mapstructure:"metrics"`
 	Log      loggerjson.Config `mapstructure:"log"`
-	Database postgres.Config   `mapstructure:"db"`
+	Database DatabaseConfig    `mapstructure:"db"`
+}
+
+// DatabaseConfig holds shared connection settings plus separate credentials for each role.
+type DatabaseConfig struct {
+	Host       string              `mapstructure:"host"`
+	Port       int                 `mapstructure:"port"`
+	Database   string              `mapstructure:"database"`
+	PoolSize   int                 `mapstructure:"poolsize"`
+	Check      bool                `mapstructure:"check"`
+	Runtime    DatabaseCredentials `mapstructure:"runtime"`
+	Migrations DatabaseCredentials `mapstructure:"migrations"`
+}
+
+// DatabaseCredentials holds the username and password for a database role.
+type DatabaseCredentials struct {
+	User     string `mapstructure:"user"`
+	Password string `mapstructure:"password"`
+}
+
+// RuntimeConfig returns a Postgres adapter config using the runtime (restricted) credentials.
+// Use this when creating the database adapter in the container.
+func (c DatabaseConfig) RuntimeConfig() postgres.Config {
+	return postgres.Config{
+		Host:     c.Host,
+		Port:     c.Port,
+		Database: c.Database,
+		User:     c.Runtime.User,
+		Password: c.Runtime.Password,
+		PoolSize: c.PoolSize,
+		Check:    c.Check,
+	}
 }
 
 // AppConfig holds application configurations.
