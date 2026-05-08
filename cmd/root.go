@@ -3,6 +3,8 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/tlmanz/cgen/scaffold"
@@ -47,6 +49,12 @@ func Execute() {
 	}
 }
 
-func runNew(cmd *cobra.Command, args []string) error {
-	return scaffold.New(flagModule, flagDir, flagYes)
+func runNew(cmd *cobra.Command, _ []string) error {
+	projectDir := flagDir
+	if !cmd.Flags().Changed("dir") {
+		// No --dir given: default to a subdirectory named after the service.
+		parts := strings.Split(strings.TrimRight(flagModule, "/"), "/")
+		projectDir = filepath.Join(flagDir, parts[len(parts)-1])
+	}
+	return scaffold.New(flagModule, projectDir, flagYes)
 }

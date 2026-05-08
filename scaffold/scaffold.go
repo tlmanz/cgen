@@ -11,10 +11,10 @@ import (
 const originalModule = "github.com/tlmanz/catalyst/v3"
 
 // New scaffolds a new Catalyst project with the given Go module name.
-func New(module, outDir string, skipConfirm bool) error {
+// projectDir is the exact destination directory — the caller decides the path.
+func New(module, projectDir string, skipConfirm bool) error {
 	parts := strings.Split(strings.TrimRight(module, "/"), "/")
 	projectName := parts[len(parts)-1]
-	projectDir := filepath.Join(outDir, projectName)
 
 	if !skipConfirm {
 		fmt.Printf("Creating project '%s' at '%s'\n", projectName, projectDir)
