@@ -4,14 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"runtime/debug"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
 )
-
-// Version is the current release version of cgen.
-// Update this constant before tagging and pushing a new release.
-const Version = "v0.1.1"
 
 const githubRepo = "tlmanz/cgen"
 
@@ -26,7 +24,8 @@ func init() {
 }
 
 func runVersion(_ *cobra.Command, _ []string) {
-	fmt.Printf("cgen %s\n\n", Version)
+	current := currentVersion()
+	fmt.Printf("cgen %s%s\n\n", current, gitSuffix())
 
 	latest, err := latestGitHubVersion()
 	if err != nil {
@@ -37,12 +36,57 @@ func runVersion(_ *cobra.Command, _ []string) {
 	fmt.Printf("Latest release: %s\n", latest)
 
 	switch {
-	case Version == latest:
+	case !isRelease(current):
+		fmt.Println("Running a development build.")
+		fmt.Printf("Install the release with: go install github.com/%s@latest\n", githubRepo)
+	case current == latest:
 		fmt.Println("You are up to date.")
 	default:
 		fmt.Println("Update available!")
 		fmt.Printf("Run: go install github.com/%s@latest\n", githubRepo)
 	}
+}
+
+// currentVersion reads the version Go embedded at install time.
+// Returns "(devel)" for local builds without a release tag.
+func currentVersion() string {
+	if info, ok := debug.ReadBuildInfo(); ok && info.Main.Version != "" {
+		return info.Main.Version
+	}
+	return "(devel)"
+}
+
+// gitSuffix returns " (commithash[, dirty])" from VCS build settings, or "".
+func gitSuffix() string {
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return ""
+	}
+	var rev, modified string
+	for _, s := range info.Settings {
+		switch s.Key {
+		case "vcs.revision":
+			if len(s.Value) >= 7 {
+				rev = s.Value[:7]
+			}
+		case "vcs.modified":
+			if s.Value == "true" {
+				modified = ", dirty"
+			}
+		}
+	}
+	if rev == "" {
+		return ""
+	}
+	return fmt.Sprintf(" (%s%s)", rev, modified)
+}
+
+// isRelease reports whether version is a proper release tag (e.g. v1.2.3).
+// Pseudo-versions (v0.0.0-timestamp-commit) and "(devel)" are not releases.
+func isRelease(version string) bool {
+	return strings.HasPrefix(version, "v") &&
+		!strings.Contains(version, "-") &&
+		!strings.Contains(version, "+")
 }
 
 type githubRelease struct {
