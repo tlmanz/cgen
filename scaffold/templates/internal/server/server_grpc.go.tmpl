@@ -1,0 +1,17 @@
+package server
+
+// To remove gRPC support: delete this file and presentation/grpc/.
+
+import (
+	"github.com/tlmanz/catalyst/v3/infra"
+	"github.com/tlmanz/catalyst/v3/presentation/grpc"
+)
+
+func init() {
+	Register(func(cfg infra.Config, ctr *infra.Container) (ServerLifecycle, error) {
+		if !cfg.GRPC.Enabled {
+			return nil, nil
+		}
+		return grpc.NewServer(grpc.Config{Port: cfg.GRPC.Port}, ctr)
+	})
+}

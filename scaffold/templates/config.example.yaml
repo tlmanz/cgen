@@ -1,0 +1,38 @@
+app:
+  name: catalyst  # optional; a name for the service; default: directory name
+  mode: DEBUG     # optional; the mode the service running in; values: [DEBUG, PROD]; default: DEBUG
+  timezone: UTC   # optional; the timezone the service is running in; default: UTC
+rest:
+  enabled: true   # enable or disable the REST server; default: true
+  port: 8000      # port to listen on; default: 8000
+  wait: 5s        # graceful shutdown wait period; default: 5s
+  release: false  # set to true in production (disables debug output); default: false
+graphql:
+  enabled: false  # enable or disable the GraphQL server; default: false
+  port: 8001      # port to listen on; default: 8001
+  wait: 5s        # graceful shutdown wait period; default: 5s
+grpc:
+  enabled: false  # enable or disable the gRPC server; default: false
+  port: 8002      # port to listen on; default: 8002
+ws:
+  enabled: false  # enable or disable the WebSocket server; default: false
+  port: 8003      # port to listen on; default: 8003
+  wait: 5s        # graceful shutdown wait period; default: 5s
+metrics:
+  enabled: false  # enable or disable the metrics server; default: false
+  port: 9090      # port to listen on; default: 9090 — exposes GET /metrics
+log:
+  level: INFO     # optional; log level used by the internal logger; values: [ERROR, WARN, INFO, DEBUG] default: INFO
+
+# Following configurations varies depending on what other configurations are needed for the service.
+# The following configuration is used for demonstration purposes. It reflects to the config structure used by the
+# Postgres adapter used in here (as an example).
+db:
+  # Postgres
+  host: localhost
+  port: 5432
+  database: test
+  user: postgres
+  password: admin
+  poolsize: 10
+  check: false # set to true to check whether db is accessible at startup

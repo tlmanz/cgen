@@ -1,0 +1,22 @@
+package main
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/kosatnkn/catalyst-pkgs/telemetry/log"
+	"github.com/tlmanz/catalyst/v3/infra"
+)
+
+// msgNPanic logs msg and panics to halt the service on unrecoverable errors.
+func msgNPanic(l log.Logger, msg string) {
+	msg = infra.FormatMsg(msg)
+
+	if l == nil {
+		fmt.Println(msg)
+	} else {
+		l.Error(context.Background(), msg)
+	}
+
+	panic("bootstrap")
+}

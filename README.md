@@ -3,13 +3,13 @@ A `Clean Architecture` microservice template written in `Go`.
 
 ![catalyst_logo](./docs/img/catalyst_logo.svg)
 
-[![CI](https://github.com/kosatnkn/catalyst/actions/workflows/ci.yml/badge.svg)](https://github.com/kosatnkn/catalyst/actions/workflows/ci.yml)
-[![CodeQL](https://github.com/kosatnkn/catalyst/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/kosatnkn/catalyst/actions/workflows/codeql-analysis.yml)
+[![CI](https://github.com/tlmanz/catalyst/actions/workflows/ci.yml/badge.svg)](https://github.com/tlmanz/catalyst/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/tlmanz/catalyst/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/tlmanz/catalyst/actions/workflows/codeql-analysis.yml)
 [![Coverage Status](https://coveralls.io/repos/github/kosatnkn/catalyst/badge.svg?branch=master)](https://coveralls.io/github/kosatnkn/catalyst?branch=master)
 ![Open Issues](https://img.shields.io/github/issues/kosatnkn/catalyst)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/kosatnkn/catalyst)
-[![Go Reference](https://pkg.go.dev/badge/github.com/kosatnkn/catalyst/v3.svg)](https://pkg.go.dev/github.com/kosatnkn/catalyst/v3)
-[![Go Report Card](https://goreportcard.com/badge/github.com/kosatnkn/catalyst)](https://goreportcard.com/report/github.com/kosatnkn/catalyst)
+[![Go Reference](https://pkg.go.dev/badge/github.com/tlmanz/catalyst/v3.svg)](https://pkg.go.dev/github.com/tlmanz/catalyst/v3)
+[![Go Report Card](https://goreportcard.com/badge/github.com/tlmanz/catalyst)](https://goreportcard.com/report/github.com/tlmanz/catalyst)
 
 ## 1. Introduction
 For **version 3** of **Catalyst**, my main focus was to make it simple, clean and upgradable. Looking back, these are the very things I struggled with in both previous versions. Especially upgradability.
@@ -63,13 +63,13 @@ Telemetry configurations for metrics and traces can be set up here as well. Howe
 
 Use the following command to directly create a new microservice using **Catalyst** in your current working directory.
 ```shell
-curl -fsSL https://github.com/kosatnkn/catalyst/releases/download/v3.3.0/new_from_v3.3.0.sh | bash -s -- --module="example.com/dummyuser/sampler" --yes
+curl -fsSL https://github.com/tlmanz/catalyst/releases/download/v3.3.0/new_from_v3.3.0.sh | bash -s -- --module="example.com/dummyuser/sampler" --yes
 ```
 
 If you prefer to first download the script, inspect it, and then run it (which is the safer approach), use following commands.
 ```shell
 # download first
-curl -fsSL -o new_from_v3.3.0.sh https://github.com/kosatnkn/catalyst/releases/download/v3.3.0/new_from_v3.3.0.sh
+curl -fsSL -o new_from_v3.3.0.sh https://github.com/tlmanz/catalyst/releases/download/v3.3.0/new_from_v3.3.0.sh
 
 # inspect
 # ...

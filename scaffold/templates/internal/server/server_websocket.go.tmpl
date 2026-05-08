@@ -1,0 +1,17 @@
+package server
+
+// To remove WebSocket support: delete this file and presentation/websocket/.
+
+import (
+	"github.com/tlmanz/catalyst/v3/infra"
+	"github.com/tlmanz/catalyst/v3/presentation/websocket"
+)
+
+func init() {
+	Register(func(cfg infra.Config, ctr *infra.Container) (ServerLifecycle, error) {
+		if !cfg.WS.Enabled {
+			return nil, nil
+		}
+		return websocket.NewServer(websocket.Config{Port: cfg.WS.Port, Wait: cfg.WS.Wait}, ctr)
+	})
+}

@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package account;
+
+option go_package = "github.com/tlmanz/catalyst/v3/presentation/grpc;grpc";
+
+// AccountService provides account management operations.
+service AccountService {
+  rpc GetAccounts(GetAccountsRequest) returns (AccountListResponse);
+  rpc CreateAccount(CreateAccountRequest) returns (AccountResponse);
+}
+
+message GetAccountsRequest {}
+
+message CreateAccountRequest {
+  string owner    = 1;
+  string currency = 2;
+  float  balance  = 3;
+}
+
+message AccountResponse {
+  uint32 id       = 1;
+  string owner    = 2;
+  string currency = 3;
+  float  balance  = 4;
+}
+
+message AccountListResponse {
+  repeated AccountResponse accounts = 1;
+}

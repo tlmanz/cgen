@@ -1,0 +1,77 @@
+package metrics
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"net/http"
+	"time"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.opentelemetry.io/otel"
+	promexporter "go.opentelemetry.io/otel/exporters/prometheus"
+	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
+
+	"github.com/tlmanz/catalyst/v3/infra"
+)
+
+// Config holds configuration for the metrics server.
+type Config struct {
+	Port int
+}
+
+// Server is the metrics HTTP server.
+type Server struct {
+	cfg      Config
+	ctr      *infra.Container
+	srv      *http.Server
+	provider *sdkmetric.MeterProvider
+}
+
+// NewServer returns a new metrics server instance.
+func NewServer(cfg Config, ctr *infra.Container) (*Server, error) {
+	return &Server{cfg: cfg, ctr: ctr}, nil
+}
+
+// Name returns the server name.
+func (s *Server) Name() string { return "Metrics" }
+
+// Start sets up the OTel Prometheus exporter and starts the /metrics HTTP endpoint.
+func (s *Server) Start() error {
+	exporter, err := promexporter.New()
+	if err != nil {
+		return fmt.Errorf("metrics: creating prometheus exporter: %w", err)
+	}
+
+	s.provider = sdkmetric.NewMeterProvider(sdkmetric.WithReader(exporter))
+	otel.SetMeterProvider(s.provider)
+
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.Handler())
+
+	s.srv = &http.Server{
+		Addr:    fmt.Sprintf(":%d", s.cfg.Port),
+		Handler: mux,
+	}
+
+	go func() {
+		if err := s.srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			s.ctr.Logger.Error(context.Background(),
+				errors.Join(errors.New("metrics: server error"), err).Error())
+		}
+	}()
+
+	return nil
+}
+
+// Stop gracefully stops the metrics server and shuts down the OTel provider.
+func (s *Server) Stop() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := s.srv.Shutdown(ctx); err != nil {
+		return err
+	}
+
+	return s.provider.Shutdown(context.Background())
+}

@@ -1,0 +1,17 @@
+package server
+
+// To remove GraphQL support: delete this file and presentation/graphql/.
+
+import (
+	"github.com/tlmanz/catalyst/v3/infra"
+	"github.com/tlmanz/catalyst/v3/presentation/graphql"
+)
+
+func init() {
+	Register(func(cfg infra.Config, ctr *infra.Container) (ServerLifecycle, error) {
+		if !cfg.GraphQL.Enabled {
+			return nil, nil
+		}
+		return graphql.NewServer(graphql.Config{Port: cfg.GraphQL.Port, Wait: cfg.GraphQL.Wait}, ctr)
+	})
+}

@@ -1,0 +1,24 @@
+package main
+
+import (
+	"context"
+
+	"github.com/tlmanz/catalyst/v3/infra"
+	"github.com/tlmanz/catalyst/v3/internal/migrations"
+	pgmigrator "github.com/tlmanz/postgres-migrator"
+)
+
+func runMigrations(ctx context.Context, cfg infra.Config, ctr *infra.Container) error {
+	ctr.Logger.Info(ctx, "running database migrations")
+
+	return pgmigrator.Run(ctx, pgmigrator.Config{
+		Host:     cfg.Database.Host,
+		Port:     cfg.Database.Port,
+		Database: cfg.Database.Database,
+		User:     cfg.Database.User,
+		Password: cfg.Database.Password,
+	}, migrations.FS, "sql", pgmigrator.LogFunc{
+		InfoFn:  func(msg string) { ctr.Logger.Info(ctx, msg) },
+		ErrorFn: func(msg string) { ctr.Logger.Error(ctx, msg) },
+	})
+}

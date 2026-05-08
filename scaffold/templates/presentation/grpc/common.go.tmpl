@@ -1,0 +1,23 @@
+package grpc
+
+// Request and response types for the AccountService.
+// Replace these with proto-generated types once you run buf generate.
+
+type GetAccountsRequest struct{}
+
+type CreateAccountRequest struct {
+	Owner    string  `json:"owner"`
+	Currency string  `json:"currency"`
+	Balance  float32 `json:"balance"`
+}
+
+type AccountResponse struct {
+	ID       uint32  `json:"id"`
+	Owner    string  `json:"owner"`
+	Currency string  `json:"currency"`
+	Balance  float32 `json:"balance"`
+}
+
+type AccountListResponse struct {
+	Accounts []AccountResponse `json:"accounts"`
+}

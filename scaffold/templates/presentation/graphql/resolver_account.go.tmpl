@@ -1,0 +1,57 @@
+package graphql
+
+import (
+	"context"
+
+	gql "github.com/graphql-go/graphql"
+	"github.com/tlmanz/catalyst/v3/domain/entities"
+	"github.com/tlmanz/catalyst/v3/domain/usecases"
+	"github.com/tlmanz/catalyst/v3/infra"
+)
+
+func newQueryType(ctr *infra.Container) *gql.Object {
+	accounts := usecases.NewAccountUseCases(ctr)
+
+	return gql.NewObject(gql.ObjectConfig{
+		Name: "Query",
+		Fields: gql.Fields{
+			"accounts": &gql.Field{
+				Type:        gql.NewList(accountType),
+				Description: "Get a list of accounts.",
+				Resolve: func(p gql.ResolveParams) (any, error) {
+					return accounts.GetAccounts(
+						context.Background(),
+						map[string]any{},
+						map[string]uint32{"page": 1, "size": 10},
+					)
+				},
+			},
+		},
+	})
+}
+
+func newMutationType(ctr *infra.Container) *gql.Object {
+	accounts := usecases.NewAccountUseCases(ctr)
+
+	return gql.NewObject(gql.ObjectConfig{
+		Name: "Mutation",
+		Fields: gql.Fields{
+			"createAccount": &gql.Field{
+				Type:        accountType,
+				Description: "Create a new account.",
+				Args: gql.FieldConfigArgument{
+					"owner":    &gql.ArgumentConfig{Type: gql.NewNonNull(gql.String)},
+					"currency": &gql.ArgumentConfig{Type: gql.String, DefaultValue: "USD"},
+				},
+				Resolve: func(p gql.ResolveParams) (any, error) {
+					owner, _ := p.Args["owner"].(string)
+					currency, _ := p.Args["currency"].(string)
+					return accounts.CreateAccount(context.Background(), entities.Account{
+						Owner:    owner,
+						Currency: currency,
+					})
+				},
+			},
+		},
+	})
+}

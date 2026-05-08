@@ -1,0 +1,58 @@
+package grpc
+
+import (
+	"context"
+
+	grpclib "google.golang.org/grpc"
+)
+
+// AccountServiceServer is the interface each account service implementation must satisfy.
+type AccountServiceServer interface {
+	GetAccounts(context.Context, *GetAccountsRequest) (*AccountListResponse, error)
+	CreateAccount(context.Context, *CreateAccountRequest) (*AccountResponse, error)
+}
+
+// RegisterAccountServiceServer registers the AccountService with the gRPC server.
+func RegisterAccountServiceServer(s *grpclib.Server, srv AccountServiceServer) {
+	s.RegisterService(&accountServiceDesc, srv)
+}
+
+var accountServiceDesc = grpclib.ServiceDesc{
+	ServiceName: "account.AccountService",
+	HandlerType: (*AccountServiceServer)(nil),
+	Methods: []grpclib.MethodDesc{
+		{MethodName: "GetAccounts", Handler: _AccountService_GetAccounts_Handler},
+		{MethodName: "CreateAccount", Handler: _AccountService_CreateAccount_Handler},
+	},
+	Streams: []grpclib.StreamDesc{},
+}
+
+func _AccountService_GetAccounts_Handler(srv any, ctx context.Context, dec func(any) error, interceptor grpclib.UnaryServerInterceptor) (any, error) {
+	in := new(GetAccountsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountServiceServer).GetAccounts(ctx, in)
+	}
+	info := &grpclib.UnaryServerInfo{Server: srv, FullMethod: "/account.AccountService/GetAccounts"}
+	handler := func(ctx context.Context, req any) (any, error) {
+		return srv.(AccountServiceServer).GetAccounts(ctx, req.(*GetAccountsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AccountService_CreateAccount_Handler(srv any, ctx context.Context, dec func(any) error, interceptor grpclib.UnaryServerInterceptor) (any, error) {
+	in := new(CreateAccountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountServiceServer).CreateAccount(ctx, in)
+	}
+	info := &grpclib.UnaryServerInfo{Server: srv, FullMethod: "/account.AccountService/CreateAccount"}
+	handler := func(ctx context.Context, req any) (any, error) {
+		return srv.(AccountServiceServer).CreateAccount(ctx, req.(*CreateAccountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}

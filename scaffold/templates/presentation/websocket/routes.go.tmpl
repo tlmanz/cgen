@@ -1,0 +1,26 @@
+package websocket
+
+import (
+	"net/http"
+
+	ws "github.com/gorilla/websocket"
+	"github.com/tlmanz/catalyst/v3/infra"
+)
+
+func newRouter(ctr *infra.Container) *http.ServeMux {
+	upgrader := newUpgrader()
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/ws", newAccountHandler(ctr, upgrader).handle)
+
+	return mux
+}
+
+func newUpgrader() ws.Upgrader {
+	return ws.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+		// Allow all origins in development; restrict this in production.
+		CheckOrigin: func(r *http.Request) bool { return true },
+	}
+}

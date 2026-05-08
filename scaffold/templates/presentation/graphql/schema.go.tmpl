@@ -1,0 +1,13 @@
+package graphql
+
+import (
+	gql "github.com/graphql-go/graphql"
+	"github.com/tlmanz/catalyst/v3/infra"
+)
+
+func newSchema(ctr *infra.Container) (gql.Schema, error) {
+	return gql.NewSchema(gql.SchemaConfig{
+		Query:    newQueryType(ctr),
+		Mutation: newMutationType(ctr),
+	})
+}

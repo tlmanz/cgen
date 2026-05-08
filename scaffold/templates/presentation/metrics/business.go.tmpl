@@ -1,0 +1,31 @@
+package metrics
+
+import (
+	"context"
+	"sync"
+
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/metric"
+)
+
+// Business counters use lazy initialisation via sync.Once so they resolve
+// against the real OTel provider (set up in Server.Start) rather than the
+// no-op provider that is active before the metrics server starts.
+
+var (
+	accountsCreatedOnce    sync.Once
+	accountsCreatedCounter metric.Int64Counter
+)
+
+// RecordAccountCreated increments the accounts_created_total counter by 1.
+// Call this from your use case after successfully persisting a new account.
+func RecordAccountCreated(ctx context.Context) {
+	accountsCreatedOnce.Do(func() {
+		meter := otel.Meter("business")
+		accountsCreatedCounter, _ = meter.Int64Counter(
+			"accounts_created_total",
+			metric.WithDescription("Total number of accounts created"),
+		)
+	})
+	accountsCreatedCounter.Add(ctx, 1)
+}

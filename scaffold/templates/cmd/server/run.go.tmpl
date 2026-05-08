@@ -1,0 +1,52 @@
+package main
+
+import (
+	"context"
+	"errors"
+	"strings"
+
+	"github.com/tlmanz/catalyst/v3/infra"
+	"github.com/tlmanz/catalyst/v3/internal/server"
+	"github.com/tlmanz/catalyst/v3/metadata"
+)
+
+func run() {
+	loggingCtx := context.Background()
+
+	cfg, err := newConfig()
+	if err != nil {
+		msgNPanic(nil, errors.Join(errors.New("bootstrap: config parse failed"), err).Error())
+	}
+
+	ctr, err := infra.NewResolvedContainer(cfg)
+	if err != nil {
+		msgNPanic(nil, errors.Join(errors.New("bootstrap: error resolving container"), err).Error())
+	}
+	defer func() {
+		ctr.Logger.Info(loggingCtx, "destroying container")
+		if err := ctr.Destroy(); err != nil {
+			msgNPanic(ctr.Logger, errors.Join(errors.New("bootstrap: error destroying container"), err).Error())
+		}
+	}()
+
+	splash := strings.Join(append([]string{metadata.BaseInfo()}, metadata.BuildInfo()...), ", ")
+	ctr.Logger.Info(loggingCtx, splash)
+
+	if err := runMigrations(loggingCtx, cfg, ctr); err != nil {
+		msgNPanic(ctr.Logger, errors.Join(errors.New("bootstrap: error running migrations"), err).Error())
+	}
+
+	stopServers, err := server.StartServers(cfg, ctr)
+	if err != nil {
+		msgNPanic(ctr.Logger, errors.Join(errors.New("bootstrap: error starting servers"), err).Error())
+	}
+	defer stopServers()
+
+	ctr.Lifecycle.SetReady(true)
+	ctr.Logger.Info(loggingCtx, "service ready")
+
+	waitForShutdown()
+
+	ctr.Lifecycle.SetReady(false)
+	ctr.Logger.Info(loggingCtx, "stopping service")
+}

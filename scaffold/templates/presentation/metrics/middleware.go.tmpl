@@ -1,0 +1,44 @@
+package metrics
+
+import (
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
+)
+
+// NewHTTPMiddleware returns a Gin middleware that records HTTP request count and latency.
+//
+// Wire it into your REST router in presentation/rest/routes.go:
+//
+//	router.Use(metrics.NewHTTPMiddleware())
+func NewHTTPMiddleware() gin.HandlerFunc {
+	meter := otel.Meter("http.server")
+
+	requestCount, _ := meter.Int64Counter(
+		"http_server_request_count",
+		metric.WithDescription("Total number of HTTP requests received"),
+	)
+	requestLatency, _ := meter.Float64Histogram(
+		"http_server_request_duration_ms",
+		metric.WithDescription("HTTP request latency in milliseconds"),
+		metric.WithUnit("ms"),
+	)
+
+	return func(c *gin.Context) {
+		start := time.Now()
+		c.Next()
+
+		attrs := metric.WithAttributes(
+			attribute.String("method", c.Request.Method),
+			attribute.String("route", c.FullPath()),
+			attribute.Int("status_code", c.Writer.Status()),
+		)
+
+		requestCount.Add(c.Request.Context(), 1, attrs)
+		requestLatency.Record(c.Request.Context(),
+			float64(time.Since(start).Milliseconds()), attrs)
+	}
+}

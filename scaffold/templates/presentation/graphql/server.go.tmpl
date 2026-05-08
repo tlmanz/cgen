@@ -1,0 +1,77 @@
+package graphql
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"net/http"
+	"time"
+
+	"github.com/graphql-go/handler"
+	"github.com/tlmanz/catalyst/v3/infra"
+)
+
+// Config holds configuration for the GraphQL server.
+type Config struct {
+	Port int
+	Wait string
+}
+
+// Server is the GraphQL HTTP server.
+type Server struct {
+	cfg Config
+	ctr *infra.Container
+	srv *http.Server
+}
+
+// NewServer returns a new GraphQL server instance.
+func NewServer(cfg Config, ctr *infra.Container) (*Server, error) {
+	return &Server{cfg: cfg, ctr: ctr}, nil
+}
+
+// Start starts the GraphQL server.
+func (s *Server) Start() error {
+	schema, err := newSchema(s.ctr)
+	if err != nil {
+		return fmt.Errorf("graphql: error building schema: %w", err)
+	}
+
+	// Playground UI is available at /graphql in a browser (GET request)
+	h := handler.New(&handler.Config{
+		Schema:     &schema,
+		Pretty:     true,
+		GraphiQL:   false,
+		Playground: true,
+	})
+
+	mux := http.NewServeMux()
+	mux.Handle("/graphql", h)
+
+	s.srv = &http.Server{
+		Addr:    fmt.Sprintf(":%d", s.cfg.Port),
+		Handler: mux,
+	}
+
+	go func() {
+		if err := s.srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			s.ctr.Logger.Error(context.Background(),
+				errors.Join(errors.New("graphql: error in server"), err).Error())
+		}
+	}()
+
+	return nil
+}
+
+// Name returns the server name.
+func (s *Server) Name() string { return "GraphQL" }
+
+// Stop gracefully stops the GraphQL server.
+func (s *Server) Stop() error {
+	wait, err := time.ParseDuration(s.cfg.Wait)
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), wait)
+	defer cancel()
+	return s.srv.Shutdown(ctx)
+}

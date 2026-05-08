@@ -1,0 +1,61 @@
+package server
+
+import (
+	"context"
+	"errors"
+	"fmt"
+
+	"github.com/tlmanz/catalyst/v3/infra"
+)
+
+// ServerLifecycle is the contract every server implementation must satisfy.
+type ServerLifecycle interface {
+	Name() string
+	Start() error
+	Stop() error
+}
+
+// ServerFactory creates a server instance from the resolved config and container.
+// Return nil, nil when the server should not start (e.g. disabled in config).
+type ServerFactory func(cfg infra.Config, ctr *infra.Container) (ServerLifecycle, error)
+
+var factories []ServerFactory
+
+// Register adds a factory to the startup registry.
+// Call this from an init() in a server_<protocol>.go file.
+func Register(f ServerFactory) {
+	factories = append(factories, f)
+}
+
+// StartServers runs every registered factory in order and starts the resulting servers.
+// It returns a cleanup function that stops all started servers in reverse order.
+func StartServers(cfg infra.Config, ctr *infra.Container) (func(), error) {
+	ctx := context.Background()
+	var started []ServerLifecycle
+
+	for _, factory := range factories {
+		srv, err := factory(cfg, ctr)
+		if err != nil {
+			return nil, err
+		}
+		if srv == nil {
+			continue
+		}
+		ctr.Logger.Info(ctx, fmt.Sprintf("starting %s server", srv.Name()))
+		if err := srv.Start(); err != nil {
+			return nil, fmt.Errorf("%s: %w", srv.Name(), err)
+		}
+		started = append(started, srv)
+	}
+
+	return func() {
+		for i := len(started) - 1; i >= 0; i-- {
+			srv := started[i]
+			ctr.Logger.Info(ctx, fmt.Sprintf("stopping %s server", srv.Name()))
+			if err := srv.Stop(); err != nil {
+				ctr.Logger.Error(ctx,
+					errors.Join(fmt.Errorf("error stopping %s server", srv.Name()), err).Error())
+			}
+		}
+	}, nil
+}

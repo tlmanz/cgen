@@ -1,0 +1,59 @@
+package infra
+
+import (
+	"github.com/kosatnkn/catalyst-pkgs/persistence/postgres"
+	"github.com/kosatnkn/catalyst-pkgs/telemetry/log/loggerjson"
+)
+
+// Config is the master config struct that holds all other config structs.
+type Config struct {
+	App      AppConfig         `mapstructure:"app"`
+	Rest     RESTConfig        `mapstructure:"rest"`
+	GraphQL  GraphQLConfig     `mapstructure:"graphql"`
+	GRPC     GRPCConfig        `mapstructure:"grpc"`
+	WS       WSConfig          `mapstructure:"ws"`
+	Metrics  MetricsConfig     `mapstructure:"metrics"`
+	Log      loggerjson.Config `mapstructure:"log"`
+	Database postgres.Config   `mapstructure:"db"`
+}
+
+// AppConfig holds application configurations.
+type AppConfig struct {
+	Name     string `mapstructure:"name"`
+	Mode     string `mapstructure:"mode"`
+	Timezone string `mapstructure:"timezone"`
+}
+
+// GraphQLConfig holds GraphQL server configuration.
+type GraphQLConfig struct {
+	Enabled bool   `mapstructure:"enabled"`
+	Port    int    `mapstructure:"port"`
+	Wait    string `mapstructure:"wait"`
+}
+
+// GRPCConfig holds gRPC server configuration.
+type GRPCConfig struct {
+	Enabled bool `mapstructure:"enabled"`
+	Port    int  `mapstructure:"port"`
+}
+
+// WSConfig holds WebSocket server configuration.
+type WSConfig struct {
+	Enabled bool   `mapstructure:"enabled"`
+	Port    int    `mapstructure:"port"`
+	Wait    string `mapstructure:"wait"`
+}
+
+// MetricsConfig holds metrics server configuration.
+type MetricsConfig struct {
+	Enabled bool `mapstructure:"enabled"`
+	Port    int  `mapstructure:"port"`
+}
+
+// RESTConfig holds REST server configuration.
+type RESTConfig struct {
+	Enabled bool   `mapstructure:"enabled"`
+	Port    int    `mapstructure:"port" validate:"min=80,max=65535"`
+	Wait    string `mapstructure:"wait"`
+	Release bool   `mapstructure:"release"`
+}

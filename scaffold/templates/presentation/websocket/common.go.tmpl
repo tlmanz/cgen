@@ -1,0 +1,17 @@
+package websocket
+
+import "encoding/json"
+
+// message is the envelope for all inbound WebSocket frames.
+// Clients send: {"action":"get_accounts","payload":{}}
+type message struct {
+	Action  string          `json:"action"`
+	Payload json.RawMessage `json:"payload,omitempty"`
+}
+
+// response is the envelope for all outbound WebSocket frames.
+// Server sends: {"action":"get_accounts","payload":[...]}
+type response struct {
+	Action  string `json:"action"`
+	Payload any    `json:"payload"`
+}

@@ -1,0 +1,13 @@
+package graphql
+
+import gql "github.com/graphql-go/graphql"
+
+var accountType = gql.NewObject(gql.ObjectConfig{
+	Name: "Account",
+	Fields: gql.Fields{
+		"id":       &gql.Field{Type: gql.Int},
+		"owner":    &gql.Field{Type: gql.String},
+		"currency": &gql.Field{Type: gql.String},
+		"balance":  &gql.Field{Type: gql.Float},
+	},
+})

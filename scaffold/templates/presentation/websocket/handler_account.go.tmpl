@@ -1,0 +1,66 @@
+package websocket
+
+import (
+	"context"
+	"net/http"
+
+	ws "github.com/gorilla/websocket"
+	"github.com/tlmanz/catalyst/v3/domain/usecases"
+	"github.com/tlmanz/catalyst/v3/infra"
+)
+
+type accountHandler struct {
+	ctr      *infra.Container
+	accounts *usecases.AccountUseCases
+	upgrader ws.Upgrader
+}
+
+func newAccountHandler(ctr *infra.Container, upgrader ws.Upgrader) *accountHandler {
+	return &accountHandler{
+		ctr:      ctr,
+		accounts: usecases.NewAccountUseCases(ctr),
+		upgrader: upgrader,
+	}
+}
+
+func (h *accountHandler) handle(w http.ResponseWriter, r *http.Request) {
+	conn, err := h.upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		h.ctr.Logger.Error(context.Background(), "websocket: upgrade error: "+err.Error())
+		return
+	}
+	defer conn.Close()
+
+	h.ctr.Logger.Debug(context.Background(), "websocket: client connected")
+
+	for {
+		var msg message
+		if err := conn.ReadJSON(&msg); err != nil {
+			if ws.IsUnexpectedCloseError(err, ws.CloseGoingAway, ws.CloseAbnormalClosure) {
+				h.ctr.Logger.Error(context.Background(), "websocket: read error: "+err.Error())
+			}
+			break
+		}
+
+		resp := response{Action: msg.Action}
+
+		switch msg.Action {
+		case "get_accounts":
+			data, err := h.accounts.GetAccounts(r.Context(), map[string]any{}, map[string]uint32{"page": 1, "size": 10})
+			if err != nil {
+				resp.Payload = map[string]string{"error": err.Error()}
+			} else {
+				resp.Payload = data
+			}
+		default:
+			resp.Payload = map[string]string{"error": "unknown action: " + msg.Action}
+		}
+
+		if err := conn.WriteJSON(resp); err != nil {
+			h.ctr.Logger.Error(context.Background(), "websocket: write error: "+err.Error())
+			break
+		}
+	}
+
+	h.ctr.Logger.Debug(context.Background(), "websocket: client disconnected")
+}

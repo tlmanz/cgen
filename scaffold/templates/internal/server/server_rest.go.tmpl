@@ -1,0 +1,17 @@
+package server
+
+// To remove REST support: delete this file and presentation/rest/.
+
+import (
+	"github.com/tlmanz/catalyst/v3/infra"
+	"github.com/tlmanz/catalyst/v3/presentation/rest"
+)
+
+func init() {
+	Register(func(cfg infra.Config, ctr *infra.Container) (ServerLifecycle, error) {
+		if !cfg.Rest.Enabled {
+			return nil, nil
+		}
+		return rest.NewServer(cfg.Rest, ctr)
+	})
+}

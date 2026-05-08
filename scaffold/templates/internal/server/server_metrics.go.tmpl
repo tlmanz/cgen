@@ -1,0 +1,17 @@
+package server
+
+// To remove Metrics support: delete this file and presentation/metrics/.
+
+import (
+	"github.com/tlmanz/catalyst/v3/infra"
+	"github.com/tlmanz/catalyst/v3/presentation/metrics"
+)
+
+func init() {
+	Register(func(cfg infra.Config, ctr *infra.Container) (ServerLifecycle, error) {
+		if !cfg.Metrics.Enabled {
+			return nil, nil
+		}
+		return metrics.NewServer(metrics.Config{Port: cfg.Metrics.Port}, ctr)
+	})
+}
