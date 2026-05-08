@@ -2,6 +2,12 @@
 
 A CLI tool that scaffolds production-ready Go microservices following Clean Architecture.
 
+> **Built on [kosatnkn/catalyst](https://github.com/kosatnkn/catalyst)**
+> — a Clean Architecture microservice template written in Go by [@kosatnkn](https://github.com/kosatnkn).
+> `cgen` packages that template into an installable CLI so you can scaffold new services in one command.
+> All architectural decisions, layer structure, and design patterns originate from the original Catalyst project.
+> Full credit to the author.
+
 ## Installation
 
 ```bash
@@ -162,6 +168,30 @@ ALTER TABLE accounts ADD COLUMN email VARCHAR(255);
 -- +goose Down
 ALTER TABLE accounts DROP COLUMN email;
 ```
+
+## Credits
+
+This tool is a CLI wrapper around **[kosatnkn/catalyst](https://github.com/kosatnkn/catalyst)** — a Clean Architecture microservice template for Go, created and maintained by [@kosatnkn](https://github.com/kosatnkn).
+
+All of the following originate from the Catalyst project:
+
+- The Clean Architecture layer structure (`domain`, `infra`, `persistence`, `presentation`)
+- The DI container and config patterns in `infra/`
+- The REST server implementation using [Gin](https://github.com/gin-gonic/gin)
+- The use of [catalyst-pkgs](https://github.com/kosatnkn/catalyst-pkgs) for logging and configuration
+- The `metadata` package and `set_metadata.sh` build tooling
+- The `Makefile`, `Dockerfile`, and project conventions
+
+`cgen` adds:
+
+- A Go-installable CLI (`go install`) replacing the original shell-script scaffolding
+- GraphQL, gRPC, WebSocket, and Metrics server implementations
+- The self-registration pattern (`init()` + `internal/server/`) for protocol plug-and-unplug
+- Embedded database migrations via [postgres-migrator](https://github.com/tlmanz/postgres-migrator)
+- The `cmd/server/` + `internal/` project layout
+
+If you find Catalyst useful, please star the original repository:
+**[github.com/kosatnkn/catalyst](https://github.com/kosatnkn/catalyst)**
 
 ## Common make targets
 
