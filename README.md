@@ -1,122 +1,175 @@
-# Catalyst
-A `Clean Architecture` microservice template written in `Go`.
+# cgen
 
-![catalyst_logo](./docs/img/catalyst_logo.svg)
+A CLI tool that scaffolds production-ready Go microservices following Clean Architecture.
 
-[![CI](https://github.com/tlmanz/catalyst/actions/workflows/ci.yml/badge.svg)](https://github.com/tlmanz/catalyst/actions/workflows/ci.yml)
-[![CodeQL](https://github.com/tlmanz/catalyst/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/tlmanz/catalyst/actions/workflows/codeql-analysis.yml)
-[![Coverage Status](https://coveralls.io/repos/github/kosatnkn/catalyst/badge.svg?branch=master)](https://coveralls.io/github/kosatnkn/catalyst?branch=master)
-![Open Issues](https://img.shields.io/github/issues/kosatnkn/catalyst)
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/kosatnkn/catalyst)
-[![Go Reference](https://pkg.go.dev/badge/github.com/tlmanz/catalyst/v3.svg)](https://pkg.go.dev/github.com/tlmanz/catalyst/v3)
-[![Go Report Card](https://goreportcard.com/badge/github.com/tlmanz/catalyst)](https://goreportcard.com/report/github.com/tlmanz/catalyst)
+## Installation
 
-## 1. Introduction
-For **version 3** of **Catalyst**, my main focus was to make it simple, clean and upgradable. Looking back, these are the very things I struggled with in both previous versions. Especially upgradability.
-
-I have removed a substantial amount of code that I had passionately written for **Catalyst** over the years. In hindsight, I realized that I was just reinventing the wheel again and again, while better alternatives already existed. The more code I added for things like dynamic IoC container resolution, generalized DB transactions, and even logging and metric generation, the more opinionated **Catalyst** became.
-
-With all that bulk gone, **Catalyst** has become more of a template. Now, instead of dictating which resources to use, **Catalyst** simply defines where each type of resource should go. As the developer, you have the freedom to choose whatever you feel best fits your implementation.
-
-For example, you can use a simple struct implementation as the IoC container and resolve it manually. This is what I’ve done here for demo purposes (and also what I would actually do unless there’s a very good reason to opt for something else). Alternatively, you can plug in a heavy-duty IoC container. The same applies to loggers, database adapters, and so on.
-
-I’m maintaining a separate GitHub repository at [kosatnkn/catalyst-pkgs](https://github.com/kosatnkn/catalyst-pkgs) to host some of the packages I use here. The logger is a wrapper around [rs/zerolog](https://github.com/rs/zerolog), and the configuration parser is a wrapper around [spf13/viper](https://github.com/spf13/viper). Feel free to swap them out for whatever better suits your needs.
-
-## 2. Architecture
-There are many ways to organize a project that follows the **Clean Architecture** paradigm. This is how I’ve organized **Catalyst**.
-
-![Clean Architecture](./docs/img/clean_arch.drawio.svg)
-
-When this architecture is mapped to the directory structure of **Catalyst**, it looks like this.
-
-![Clean Architecture Dir Mapping](./docs/img/clean_arch_dir_mapping.drawio.svg)
-
-### 2.1. Domain
-The **Domain** contains all the business logic executed by the microservice. It consists of three main parts: **Entities**, **Use Cases**, and **Boundary**.
-
-#### 2.1.1. Entities
-**Entities** define the data model for the domain. These are simple `Go` structs used within the domain as well as across the domain boundary to transfer data.
-
-#### 2.1.2. Usecases
-**Usecases** contain all the business logic. Any external dependencies needed by the Use Cases (e.g., database resources) are injected into them using dependency inversion.
-
-#### 2.1.3. Boundary
-The **Boundary** marks the interface between the **Domain** and the **orchestration layers**. It contains contracts (`Go` interfaces) that facilitate dependency inversion.
-
-### 2.2. Orchestration
-Orchestration contains **Infrastructure**, **Presentation** and **Persistence**.
-
-#### 2.2.1. Infrastructure
-**Infrastructure** contains the lowest-level resources needed by the microservice, such as configuration and the IoC container.
-
-#### 2.2.2. Presentation
-**Presentation** contains all outward-facing interfaces. These are the communication channels between the microservice and the outside world. This is where you place your RESTful, GraphQL, gRPC, or WebSocket servers. It’s worth noting that you don’t need to implement all of these in a single microservice; it solely depends on the specifics of your implementation.
-
-Telemetry configurations for metrics and traces can be set up here as well. However, with currently available options, I would use an [eBPF](https://ebpf.io/) collector to gather telemetry. Unless you need to export custom metrics from your service, this approach provides sufficient information about your service.
-
-#### 2.2.3. Persistence
-**Persistence** is used to hold all data-related resources, whether it’s simple file writes, an RDBMS, an object store, or even an event-sourcing system backed by a local store. The important thing to remember is that all implementation details should be encapsulated within the **Persistence** layer. The **Domain** using these resources must not know (or care) about how persistence is implemented. Saving to a static file should be no different than saving to a messaging backend from the perspective of the **Domain** layer. All complexities related to the underlying persistence technologies should remain contained within the **Persistence** layer.
-
-## 3. Usage
-### 3.1. Create New
-**Catalyst** comes with a script that makes it easy to create new projects from it. You can find this script included with each release. It is version-locked to that specific release.
-
-Use the following command to directly create a new microservice using **Catalyst** in your current working directory.
-```shell
-curl -fsSL https://github.com/tlmanz/catalyst/releases/download/v3.3.0/new_from_v3.3.0.sh | bash -s -- --module="example.com/dummyuser/sampler" --yes
+```bash
+go install github.com/tlmanz/cgen@latest
 ```
 
-If you prefer to first download the script, inspect it, and then run it (which is the safer approach), use following commands.
-```shell
-# download first
-curl -fsSL -o new_from_v3.3.0.sh https://github.com/tlmanz/catalyst/releases/download/v3.3.0/new_from_v3.3.0.sh
+## Usage
 
-# inspect
-# ...
-
-# once ready, run
-chmod +x new_from_v3.3.0.sh
-./new_from_v3.3.0.sh --module="example.com/dummyuser/sampler"
+```bash
+cgen new --module github.com/yourorg/yourservice
 ```
 
-> **NOTE:**
->
->The directory name for your new microservice will be inferred from the Go module name that you provide with the `--module` parameter.
->
-> The script can handle version information in the module name when inferring the directory name. For example, both `example.com/dummyuser/sampler` and `example.com/dummyuser/sampler/v2` will produce `sampler` as the directory name.
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--module` | Go module path (required) | — |
+| `--dir` | Output directory | `.` (current directory) |
+| `--yes` | Skip confirmation prompt | false |
 
-### 3.2. Understanding How it Works
-The best place to start how a microservice based on Catalyst works is the `main.go` file and the `main` function.
+The project directory name is inferred from the last segment of the module path.
 
-You can easily identify how the microservice starts up and shuts down by going through the `main` function in execution order.
+## What gets generated
 
-By default it will,
-- Parse all configurations in to the `infra.Config` struct.
-- Resolve the container.
-- Start the **Presentation** layer. This includes the `REST` server, a `WebSocket` server etc.
-- Block the `main` function using a channel that waits for interrupt signals.
+```
+yourservice/
+  cmd/
+    server/              Entry point — package main
+      main.go            Calls run()
+      run.go             Startup orchestration
+      config.go          Config defaults and parsing
+      migrate.go         Database migration runner
+      signal.go          Graceful shutdown signal wait
+      fatal.go           Fatal error handler
+  internal/
+    server/              Protocol registry — package server
+      servers.go         ServerLifecycle interface, Register, StartServers
+      server_rest.go     REST registration
+      server_graphql.go  GraphQL registration
+      server_grpc.go     gRPC registration
+      server_websocket.go WebSocket registration
+      server_metrics.go  Metrics registration
+    migrations/
+      embed.go           Embeds SQL files into the binary
+      sql/               Goose-format migration files
+  domain/
+    entities/            Plain data types
+    boundary/            Use-case interfaces (ports)
+    usecases/            Business logic
+  infra/                 DI container and config
+  persistence/           Database adapters
+  presentation/
+    rest/                REST server (Gin)
+    graphql/             GraphQL server (graphql-go)
+    grpc/                gRPC server (JSON codec, no protoc required)
+    websocket/           WebSocket server (gorilla/websocket)
+    metrics/             OTel metrics — exposes /metrics for Prometheus
+  metadata/              Build-time metadata
+  Dockerfile
+  Makefile
+  config.example.yaml
+```
 
-### 3.3. Configuration
-You can provide configurations in one of two ways. Using a `config.yaml` file or using environment variables.
+## Getting started after scaffold
 
-#### 3.2.1. Configure Using `config.yaml`
-You can start by using the `config.yaml.example` file to create the basic `config.yaml` file. The current setup expects the config file (if there is a one) to be named as `config.yaml`.
+```bash
+cd yourservice
+go mod tidy
+cp config.example.yaml config.yaml   # edit DB credentials and ports
+make run
+```
 
-The structure of the `config.yaml` file depends on the structure of the `Config` struct in `./infra/config.go` file.
+## Architecture
 
-#### 3.2.2. Configure Using Environment Variables
-> NOTE: When using environment variables it will override values read from the `config.yaml` file.
+Each generated service follows Clean Architecture with strict layer boundaries:
 
-To avoid conflicts environment variables used are prefixed. The prefix to use is configurable (see `config.Settings` used in the `main` function in `main.go`).
+```
+Presentation  →  Domain (boundary interfaces)  ←  Persistence
+                       ↓
+                   Use Cases
+                       ↓
+                    Entities
+```
 
-Names of environment variables too depends on the structure of the `Config` struct in `./infra/config.go` file. You can find an example usage in the `Makefile`s `run-with-env` section.
+- **Domain** has zero external dependencies — only plain Go.
+- **Persistence** implements domain boundary interfaces (ports).
+- **Presentation** calls use cases through the container; it never touches persistence directly.
+- **infra** wires everything together at startup.
 
-### 3.3. Metadata
-Basic set of metadata such as build info for the microservice can be obtained using the `metadata` package that comes with the microservice.
+## Protocol servers
 
-You will have to use `make build` or `make run` commands from the `Makefile` to have these metadata properly read and loaded.
+Each protocol is independently toggleable. No code changes required:
 
-If you need to add some additional static metadata, you can put them in the `./metadata.txt` file.
+```yaml
+# config.yaml
+rest:
+  enabled: true
+  port: 8000
 
-### 3.4. Makefile
-A `Makefile` is used to streamline `run`, `build`, `test` and `dependency update` workflows.
+graphql:
+  enabled: false
+  port: 8001
+
+grpc:
+  enabled: false
+  port: 8002
+
+ws:
+  enabled: false
+  port: 8003
+
+metrics:
+  enabled: false
+  port: 9090   # exposes GET /metrics for Prometheus
+```
+
+### Removing a protocol permanently
+
+Delete two things — nothing else needs to change:
+
+| Protocol  | Files to delete |
+|-----------|-----------------|
+| REST      | `internal/server/server_rest.go` + `presentation/rest/` |
+| GraphQL   | `internal/server/server_graphql.go` + `presentation/graphql/` |
+| gRPC      | `internal/server/server_grpc.go` + `presentation/grpc/` |
+| WebSocket | `internal/server/server_websocket.go` + `presentation/websocket/` |
+| Metrics   | `internal/server/server_metrics.go` + `presentation/metrics/` |
+
+This works because each protocol registers itself via `init()` in its own file. Deleting the file removes it from the registry without touching anything else.
+
+## Included sample implementations
+
+Each protocol ships with a working `accounts` example wired end-to-end through the clean architecture layers:
+
+| Protocol | Sample |
+|----------|--------|
+| REST | `GET /accounts`, `POST /accounts` |
+| GraphQL | `accounts` query, `createAccount` mutation |
+| gRPC | `AccountService` with `GetAccounts` and `CreateAccount` methods |
+| WebSocket | `get_accounts` action over a JSON message envelope |
+| Metrics | HTTP request count + latency middleware, `accounts_created_total` business counter |
+
+### gRPC without protoc
+
+The gRPC sample uses a JSON codec registered at startup (`presentation/grpc/codec.go`), so it runs without any code generation step. A reference `proto/account.proto` is included for when you are ready to migrate to real protobuf.
+
+## Database migrations
+
+SQL files live in `internal/migrations/sql/` and are embedded into the binary at compile time. Migrations run automatically on every startup using [postgres-migrator](https://github.com/tlmanz/postgres-migrator) (Goose-format).
+
+```
+internal/migrations/sql/00001_init.sql
+internal/migrations/sql/00002_your_change.sql
+```
+
+```sql
+-- +goose Up
+ALTER TABLE accounts ADD COLUMN email VARCHAR(255);
+
+-- +goose Down
+ALTER TABLE accounts DROP COLUMN email;
+```
+
+## Common make targets
+
+| Command | Description |
+|---------|-------------|
+| `make run` | Run locally (also sets build metadata) |
+| `make build` | Build binary to `./main` |
+| `make test` | Run tests with coverage |
+| `make docker-build` | Build Docker image |
+| `make dep-upgrade-list` | List upgradable dependencies |
+| `make dep-upgrade-all` | Upgrade all dependencies |
