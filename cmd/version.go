@@ -11,7 +11,7 @@ import (
 
 // Version is the current release version of cgen.
 // Update this constant before tagging and pushing a new release.
-const Version = "v0.1.0"
+const Version = "v0.1.1"
 
 const githubRepo = "tlmanz/cgen"
 
