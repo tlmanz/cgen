@@ -22,16 +22,31 @@ type DatabaseConfig struct {
 	Host       string              `mapstructure:"host"`
 	Port       int                 `mapstructure:"port"`
 	Database   string              `mapstructure:"database"`
+	Schema     string              `mapstructure:"schema"`
 	PoolSize   int                 `mapstructure:"poolsize"`
 	Check      bool                `mapstructure:"check"`
 	Runtime    DatabaseCredentials `mapstructure:"runtime"`
-	Migrations DatabaseCredentials `mapstructure:"migrations"`
+	Migrations MigrationConfig     `mapstructure:"migrations"`
 }
 
 // DatabaseCredentials holds the username and password for a database role.
 type DatabaseCredentials struct {
 	User     string `mapstructure:"user"`
 	Password string `mapstructure:"password"`
+}
+
+// MigrationConfig holds the settings the embedded migrator uses at startup.
+//
+// Credentials is squashed, so its user/password keys sit directly under the
+// `migrations` block. Schema and Table control where goose keeps its
+// version-tracking table — when several services share one database, give
+// each a unique Table so their migration version numbers do not collide, and
+// use a dedicated Schema to keep the tracking tables out of the application
+// schema. Both default to the migrator's built-in values when left empty.
+type MigrationConfig struct {
+	Credentials DatabaseCredentials `mapstructure:",squash"`
+	Schema      string              `mapstructure:"schema"`
+	Table       string              `mapstructure:"table"`
 }
 
 // RuntimeConfig returns a Postgres adapter config using the runtime (restricted) credentials.

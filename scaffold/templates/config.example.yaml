@@ -31,6 +31,7 @@ db:
   host: localhost
   port: 5432
   database: test
+  schema: public   # schema for the service's application tables; default: public
   poolsize: 10
   check: false   # set to true to verify DB connectivity at startup
   runtime:
@@ -39,3 +40,8 @@ db:
   migrations:
     user: migration_user # DDL-capable role — runs schema changes at startup
     password: migration_pwd
+    # goose version-tracking table. When several services share one database,
+    # give each a UNIQUE `table` so their migration version numbers do not
+    # collide; `schema` keeps the tracking tables out of the application schema.
+    schema: migrations
+    table: goose_db_version_catalyst  # rename to this service's name

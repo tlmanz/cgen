@@ -12,11 +12,14 @@ func runMigrations(ctx context.Context, cfg infra.Config, ctr *infra.Container) 
 	ctr.Logger.Info(ctx, "running database migrations")
 
 	return pgmigrator.Run(ctx, pgmigrator.Config{
-		Host:     cfg.Database.Host,
-		Port:     cfg.Database.Port,
-		Database: cfg.Database.Database,
-		User:     cfg.Database.Migrations.User,
-		Password: cfg.Database.Migrations.Password,
+		Host:            cfg.Database.Host,
+		Port:            cfg.Database.Port,
+		Database:        cfg.Database.Database,
+		User:            cfg.Database.Migrations.Credentials.User,
+		Password:        cfg.Database.Migrations.Credentials.Password,
+		Schema:          cfg.Database.Schema,
+		MigrationSchema: cfg.Database.Migrations.Schema,
+		MigrationTable:  cfg.Database.Migrations.Table,
 	}, migrations.FS, "sql", pgmigrator.LogFunc{
 		InfoFn:  func(msg string) { ctr.Logger.Info(ctx, msg) },
 		ErrorFn: func(msg string) { ctr.Logger.Error(ctx, msg) },
